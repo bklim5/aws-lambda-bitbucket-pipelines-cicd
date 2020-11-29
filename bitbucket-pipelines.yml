@@ -1,0 +1,31 @@
+image: python:3.6
+
+stepdefinitions:
+  - lintingtesting: &lintingtesting
+      name: "Run lint & test"
+      script:
+        - make install-dev
+        - make lint
+        - make unittest
+        - make coverage
+  - compilelambda: &compilelambda
+      name: "Install dependency & compile lambda"
+      script:
+        - apt-get update # required to install zip
+        - apt-get install -y zip # required for packing up the application
+        - make lambda.zip
+      artifacts:
+        - lambda.zip
+
+pipelines:
+  branches:
+    master:
+      - step: *lintingtesting
+      - step: *compilelambda
+      - step:
+          name: "Deploy to prod lambda function"
+          deployment: production
+          script:
+            - pip install awscli
+            - aws lambda list-functions | grep ${LAMBDA_FUNCTION_NAME} || aws lambda create-function --region ap-southeast-1 --runtime python3.6 --function-name ${LAMBDA_FUNCTION_NAME} --handler "app.main.handler" --environment "Variables={ENVIRONMENT_NAME=prod}" --zip-file fileb://lambda.zip --role {{replace_with_your_role_arn}}
+            - aws lambda update-function-code --function-name ${LAMBDA_FUNCTION_NAME} --zip-file fileb://lambda.zip

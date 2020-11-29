@@ -1,0 +1,1 @@
+Details on how to use this repository to configure a CI/CD pipeline with Bitbucket can be found in the Medium post [here](https://bklim.medium.com/deploying-serverless-gcp-cloud-function-via-bitbucket-pipelines-5480795d5564).
